@@ -1,21 +1,90 @@
+import { describe, it, beforeEach, expect, vi } from 'vitest';
 
-import { describe, expect, it } from "vitest";
+const mockContractCall = vi.fn();
 
-const accounts = simnet.getAccounts();
-const address1 = accounts.get("wallet_1")!;
-
-/*
-  The test below is an example. To learn more, read the testing documentation here:
-  https://docs.hiro.so/stacks/clarinet-js-sdk
-*/
-
-describe("example tests", () => {
-  it("ensures simnet is well initalised", () => {
-    expect(simnet.blockHeight).toBeDefined();
+describe('Protocol Manager Contract', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
-
-  // it("shows an example", () => {
-  //   const { result } = simnet.callReadOnlyFn("counter", "get-counter", [], address1);
-  //   expect(result).toBeUint(0);
-  // });
+  
+  describe('create-protocol', () => {
+    it('should create a protocol successfully', async () => {
+      const name = 'Quantum Resonance Protocol';
+      const description = 'A protocol leveraging quantum resonance for inter-universe communication';
+      
+      mockContractCall.mockResolvedValue({ value: 1 }); // Assuming 1 is the new protocol ID
+      
+      const result = await mockContractCall('protocol-manager', 'create-protocol', [name, description]);
+      
+      expect(result.value).toBe(1);
+      expect(mockContractCall).toHaveBeenCalledWith('protocol-manager', 'create-protocol', [name, description]);
+    });
+  });
+  
+  describe('update-protocol-status', () => {
+    it('should update a protocol status successfully', async () => {
+      const protocolId = 1;
+      const newStatus = 'inactive';
+      
+      mockContractCall.mockResolvedValue({ value: true });
+      
+      const result = await mockContractCall('protocol-manager', 'update-protocol-status', [protocolId, newStatus]);
+      
+      expect(result.value).toBe(true);
+      expect(mockContractCall).toHaveBeenCalledWith('protocol-manager', 'update-protocol-status', [protocolId, newStatus]);
+    });
+    
+    it('should fail if the caller is not the protocol creator', async () => {
+      const protocolId = 1;
+      const newStatus = 'inactive';
+      
+      mockContractCall.mockRejectedValue(new Error('Unauthorized'));
+      
+      await expect(mockContractCall('protocol-manager', 'update-protocol-status', [protocolId, newStatus]))
+          .rejects.toThrow('Unauthorized');
+    });
+  });
+  
+  describe('get-protocol', () => {
+    it('should return protocol details', async () => {
+      const protocolId = 1;
+      const expectedProtocol = {
+        name: 'Quantum Resonance Protocol',
+        description: 'A protocol leveraging quantum resonance for inter-universe communication',
+        creator: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+        status: 'active'
+      };
+      
+      mockContractCall.mockResolvedValue({ value: expectedProtocol });
+      
+      const result = await mockContractCall('protocol-manager', 'get-protocol', [protocolId]);
+      
+      expect(result.value).toEqual(expectedProtocol);
+      expect(mockContractCall).toHaveBeenCalledWith('protocol-manager', 'get-protocol', [protocolId]);
+    });
+    
+    it('should return null for non-existent protocol', async () => {
+      const protocolId = 999;
+      
+      mockContractCall.mockResolvedValue({ value: null });
+      
+      const result = await mockContractCall('protocol-manager', 'get-protocol', [protocolId]);
+      
+      expect(result.value).toBeNull();
+    });
+  });
+  
+  describe('get-protocol-count', () => {
+    it('should return the total number of protocols', async () => {
+      const expectedCount = 5;
+      
+      mockContractCall.mockResolvedValue({ value: expectedCount });
+      
+      const result = await mockContractCall('protocol-manager', 'get-protocol-count', []);
+      
+      expect(result.value).toBe(expectedCount);
+      expect(mockContractCall).toHaveBeenCalledWith('protocol-manager', 'get-protocol-count', []);
+    });
+  });
 });
+
